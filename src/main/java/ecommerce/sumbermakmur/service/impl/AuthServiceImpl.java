@@ -50,14 +50,22 @@ public class AuthServiceImpl implements AuthService {
 
         Role roleSuperAdmin = roleService.getOrSave(ERole.ROLE_SUPER_ADMIN);
 
+        Role roleAdmin = roleService.getOrSave(ERole.ROLE_ADMIN);
+
         String encode = passwordEncoder.encode("P@ssword9898");
 
         User user = User.builder()
                 .email(emailSuper)
                 .password(encode)
-                .parts(List.of(roleSuperAdmin))
+                .parts(List.of(roleSuperAdmin, roleAdmin))
                 .build();
         repository.save(user);
+
+        Customer customer = Customer.builder()
+                .user(user)
+                .build();
+
+        customerService.create(customer);
     }
 
     @Override

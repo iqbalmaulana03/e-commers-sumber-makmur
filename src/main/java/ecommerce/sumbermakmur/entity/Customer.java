@@ -1,6 +1,5 @@
 package ecommerce.sumbermakmur.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,8 +26,10 @@ public class Customer extends DateTime{
     private String address;
 
     @Column(name = "phone_number")
-    @JsonFormat(pattern = "^08[0-9]{8,11}$")
     private String phoneNumber;
+
+    @Column(name = "avatar_file_name")
+    private String avatarFileName;
 
     @OneToOne
     @JoinColumn(name = "user_id")
