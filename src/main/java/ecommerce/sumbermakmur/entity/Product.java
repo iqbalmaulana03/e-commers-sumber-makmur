@@ -1,12 +1,7 @@
 package ecommerce.sumbermakmur.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.util.List;
+import lombok.*;
 
 @Getter
 @Setter
@@ -14,6 +9,7 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @Table(name = "m_product")
+@Builder
 public class Product extends DateTime{
 
     @Id
@@ -29,7 +25,4 @@ public class Product extends DateTime{
     private Long price;
 
     private Integer stock;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    private List<Category> categories;
 }

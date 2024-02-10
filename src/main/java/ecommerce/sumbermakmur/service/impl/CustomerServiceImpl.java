@@ -9,7 +9,7 @@ import ecommerce.sumbermakmur.repository.CustomerRepository;
 import ecommerce.sumbermakmur.service.CustomerService;
 import ecommerce.sumbermakmur.utils.ValidationUtils;
 import jakarta.persistence.criteria.Predicate;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -25,12 +25,12 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 @Service
-@RequiredArgsConstructor
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository repository;
@@ -46,6 +46,12 @@ public class CustomerServiceImpl implements CustomerService {
     private static final String FORBIDDEN = "FORBIDDEN";
 
     private static final String NOT_FOUND = "NOT_FOUND";
+
+    public CustomerServiceImpl(CustomerRepository repository, ValidationUtils utils, @Value("${app.sumbermakmur.directory-image-path}") String directoryPath) {
+        this.repository = repository;
+        this.utils = utils;
+        this.directoryPath = Paths.get(directoryPath);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
