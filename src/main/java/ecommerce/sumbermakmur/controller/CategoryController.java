@@ -22,7 +22,7 @@ public class CategoryController {
     private final CategoryService service;
 
     @PostMapping("/")
-    @PreAuthorize("hashAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<WebResponse<Category>> create(@RequestBody Category category){
         Category savedCategory = service.create(category);
 
@@ -36,7 +36,7 @@ public class CategoryController {
     }
 
     @GetMapping("/{categoryId}")
-    @PreAuthorize("hashAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<WebResponse<Category>> get(@PathVariable("categoryId") String id){
         Category category = service.get(id);
 
@@ -50,7 +50,7 @@ public class CategoryController {
     }
 
     @PutMapping("/{categoryId}")
-    @PreAuthorize("hashAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<WebResponse<Category>> update(@PathVariable("categoryId") String id,
                                                         @RequestBody Category category){
         category.setId(id);
@@ -67,7 +67,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{categoryId}")
-    @PreAuthorize("hashAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<WebResponse<String>> delete(@PathVariable("categoryId") String id){
         service.delete(id);
 
@@ -81,7 +81,6 @@ public class CategoryController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hashAnyRole('ADMIN')")
     public ResponseEntity<WebResponse<List<Category>>> search(@RequestParam(name = "categoryName", required = false)String categoryName,
                                                               @RequestParam(name = "page", defaultValue = "1")Integer page,
                                                               @RequestParam(name = "size", defaultValue = "10")Integer size){

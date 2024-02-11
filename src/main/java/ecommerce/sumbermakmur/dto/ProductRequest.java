@@ -1,13 +1,14 @@
 package ecommerce.sumbermakmur.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -27,6 +28,8 @@ public class ProductRequest {
     @NotNull(message = "price not be null!")
     private Long price;
 
-    @NotBlank(message = "Stock not be blank!")
+    @NotNull(message = "Stock not be null!")
     private Integer stock;
+
+    private List<ProductDetailRequest> productDetails;
 }

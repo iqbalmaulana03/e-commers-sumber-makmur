@@ -8,5 +8,5 @@ import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, String>, JpaSpecificationExecutor<Product> {
 
-    Optional<Product> findByProductName(String name);
+    Optional<Product> findByNameProduct(String name);
 }

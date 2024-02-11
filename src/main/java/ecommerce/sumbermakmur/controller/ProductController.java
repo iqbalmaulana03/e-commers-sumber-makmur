@@ -7,7 +7,6 @@ import ecommerce.sumbermakmur.dto.response.ProductResponse;
 import ecommerce.sumbermakmur.dto.response.WebResponse;
 import ecommerce.sumbermakmur.service.ProductService;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -52,20 +51,18 @@ public class ProductController {
         request.setPage(page);
         request.setSize(size);
 
-        Page<ProductResponse> all = service.search(request);
+        List<ProductResponse> all = service.search(request);
 
         PagingResponse paging = PagingResponse.builder()
                 .page(request.getPage())
                 .size(size)
-                .totalPage(all.getTotalPages())
-                .totalElements(all.getTotalElements())
                 .build();
 
         WebResponse<List<ProductResponse>> response = WebResponse.<List<ProductResponse>>builder()
                 .message("successfully get all Product")
                 .status(HttpStatus.OK.getReasonPhrase())
                 .paging(paging)
-                .data(all.getContent())
+                .data(all)
                 .build();
 
         return ResponseEntity.ok(response);

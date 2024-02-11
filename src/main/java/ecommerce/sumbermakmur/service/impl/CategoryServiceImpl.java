@@ -36,7 +36,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         utils.validate(category);
 
-        Optional<Category> categoryOptional = repository.findByName(category.getNameCategory());
+        Optional<Category> categoryOptional = repository.findByNameCategory(category.getNameCategory());
 
         if (categoryOptional.isPresent()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "BAD_REQUEST");
 
@@ -54,6 +54,12 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Category update(Category category) {
+
+        utils.validate(category);
+
+        Optional<Category> categoryOptional = repository.findByNameCategory(category.getNameCategory());
+
+        if (categoryOptional.isPresent()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "BAD_REQUEST");
 
         Category categorySaved = repository.findById(category.getId()).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "NOT_FOUND")
@@ -87,6 +93,12 @@ public class CategoryServiceImpl implements CategoryService {
         List<Category> responses = all.getContent();
 
         return new PageImpl<>(responses, pageable, all.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
+    public List<Category> getALlById(String id) {
+        return repository.findAllById(id);
     }
 
     private static Specification<Category> getCategorySpecification(SearchCategoryRequest request) {

@@ -1,6 +1,7 @@
 package ecommerce.sumbermakmur.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import ecommerce.sumbermakmur.listener.Times;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
@@ -25,11 +26,13 @@ import java.time.LocalDateTime;
 public class DateTime implements Times {
 
     @Column( name = "created_at")
+    @JsonIgnore
     @CreationTimestamp
     @JsonFormat(pattern = "yyyy/MM/dd, HH:mm:ss", timezone = "Asia/Jakarta")
     private LocalDateTime createdAt;
 
     @Column( name = "updated_at")
+    @JsonIgnore
     @UpdateTimestamp
     @JsonFormat(pattern = "yyyy/MM/dd, HH:mm:ss", timezone = "Asia/Jakarta")
     private LocalDateTime updatedAt;

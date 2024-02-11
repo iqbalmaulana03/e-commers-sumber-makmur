@@ -1,19 +1,20 @@
 package ecommerce.sumbermakmur.service.impl;
 
+import ecommerce.sumbermakmur.dto.ProductDetailRequest;
 import ecommerce.sumbermakmur.dto.ProductRequest;
 import ecommerce.sumbermakmur.dto.SearchProductRequest;
+import ecommerce.sumbermakmur.dto.response.ProductDetail;
 import ecommerce.sumbermakmur.dto.response.ProductResponse;
+import ecommerce.sumbermakmur.entity.Category;
 import ecommerce.sumbermakmur.entity.Product;
+import ecommerce.sumbermakmur.entity.ProductCategoryDetail;
 import ecommerce.sumbermakmur.repository.ProductRepository;
+import ecommerce.sumbermakmur.service.CategoryService;
+import ecommerce.sumbermakmur.service.ProductCategoryDetailService;
 import ecommerce.sumbermakmur.service.ProductService;
 import ecommerce.sumbermakmur.utils.ValidationUtils;
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -30,6 +30,10 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository repository;
 
+    private final ProductCategoryDetailService productCategoryDetailService;
+
+    private final CategoryService categoryService;
+
     private final ValidationUtils utils;
 
     @Override
@@ -37,7 +41,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse create(ProductRequest request) {
         utils.validate(request);
 
-        Optional<Product> optionalProduct = repository.findByProductName(request.getProductName());
+        Optional<Product> optionalProduct = repository.findByNameProduct(request.getProductName());
 
         if (optionalProduct.isPresent()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "BAD_REQUEST");
 
@@ -48,9 +52,36 @@ public class ProductServiceImpl implements ProductService {
                 .stock(request.getStock())
                 .build();
 
-        repository.save(product);
+        repository.saveAndFlush(product);
 
-        return toProductResponse(product);
+        List<ProductDetail> productDetails = new ArrayList<>();
+
+        for (ProductDetailRequest productDetail : request.getProductDetails()){
+            Category category = categoryService.get(productDetail.getCategoryId());
+
+            ProductCategoryDetail productCategoryDetail = ProductCategoryDetail.builder()
+                    .product(product)
+                    .category(category)
+                    .build();
+
+            productCategoryDetailService.createOrDetail(productCategoryDetail);
+
+            ProductDetail categoryDetail = ProductDetail.builder()
+                    .id(productCategoryDetail.getId())
+                    .categoryId(category.getId())
+                    .categoryName(category.getNameCategory())
+                    .build();
+            productDetails.add(categoryDetail);
+        }
+
+        return ProductResponse.builder()
+                .id(product.getId())
+                .productName(product.getNameProduct())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .stock(product.getStock())
+                .responses(productDetails)
+                .build();
     }
 
     @Override
@@ -60,7 +91,27 @@ public class ProductServiceImpl implements ProductService {
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "NOT_FOUND")
         );
 
-        return toProductResponse(product);
+        List<ProductCategoryDetail> productCategoryDetails = productCategoryDetailService.get(id);
+
+        List<ProductDetail> productDetails = new ArrayList<>();
+
+        for (ProductCategoryDetail productCategoryDetail : productCategoryDetails){
+            ProductDetail productDetail = ProductDetail.builder()
+                    .id(productCategoryDetail.getId())
+                    .categoryId(productCategoryDetail.getCategory().getId())
+                    .categoryName(productCategoryDetail.getCategory().getNameCategory())
+                    .build();
+
+            productDetails.add(productDetail);
+        }
+        return ProductResponse.builder()
+                .id(product.getId())
+                .productName(product.getNameProduct())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .stock(product.getStock())
+                .responses(productDetails)
+                .build();
     }
 
     @Override
@@ -68,6 +119,10 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse update(ProductRequest request) {
 
         utils.validate(request);
+
+        Optional<Product> optionalProduct = repository.findByNameProduct(request.getProductName());
+
+        if (optionalProduct.isPresent()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "BAD_REQUEST");
 
         Product product = repository.findById(request.getId()).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "NOT_FOUND")
@@ -80,7 +135,34 @@ public class ProductServiceImpl implements ProductService {
 
         repository.save(product);
 
-        return toProductResponse(product);
+        List<ProductDetail> productDetails = new ArrayList<>();
+
+        for (ProductDetailRequest productDetail : request.getProductDetails()){
+            Category category = categoryService.get(productDetail.getCategoryId());
+
+            ProductCategoryDetail productCategoryDetail = ProductCategoryDetail.builder()
+                    .product(product)
+                    .category(category)
+                    .build();
+
+            productCategoryDetailService.createOrDetail(productCategoryDetail);
+
+            ProductDetail categoryDetail = ProductDetail.builder()
+                    .id(productCategoryDetail.getId())
+                    .categoryId(category.getId())
+                    .categoryName(category.getNameCategory())
+                    .build();
+            productDetails.add(categoryDetail);
+        }
+
+        return ProductResponse.builder()
+                .id(product.getId())
+                .productName(product.getNameProduct())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .stock(product.getStock())
+                .responses(productDetails)
+                .build();
     }
 
     @Override
@@ -90,54 +172,46 @@ public class ProductServiceImpl implements ProductService {
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "NOT FOUND")
         );
 
+        productCategoryDetailService.delete(id);
         repository.delete(product);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> search(SearchProductRequest request) {
-        Specification<Product> specification = getProductSpecification(request);
+    public List<ProductResponse> search(SearchProductRequest request) {
 
-        if(request.getPage() <= 0) request.setPage(1);
+        Page<ProductCategoryDetail> search = productCategoryDetailService.search(request);
 
-        Pageable pageable = PageRequest.of((request.getPage() - 1), request.getSize());
-        Page<Product> all = repository.findAll(specification, pageable);
-        List<ProductResponse> responses = all.getContent().stream()
-                .map(this::toProductResponse)
-                .toList();
+        List<ProductResponse> responses = new ArrayList<>();
 
-        return new PageImpl<>(responses, pageable, all.getTotalElements());
+        for (ProductCategoryDetail productCategoryDetail : search.getContent()){
 
-    }
+            List<ProductDetail> productDetails = new ArrayList<>();
 
-    private static Specification<Product> getProductSpecification(SearchProductRequest request) {
-        return ((root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
+            List<Category> aLlById = categoryService.getALlById(productCategoryDetail.getCategory().getId());
 
-            if (Objects.nonNull(request.getProductName())){
-                predicates.add(criteriaBuilder.like(root.get("productName"), "%"+ request.getProductName()+"%"));
+            for (Category category : aLlById){
+                ProductDetail productDetail = ProductDetail.builder()
+                        .id(productCategoryDetail.getId())
+                        .categoryId(category.getId())
+                        .categoryName(category.getNameCategory())
+                        .build();
+
+                productDetails.add(productDetail);
             }
 
-            if (Objects.nonNull(request.getMinPrice())) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("price"), request.getMinPrice()));
-            }
+            ProductResponse response = ProductResponse.builder()
+                    .id(productCategoryDetail.getProduct().getId())
+                    .productName(productCategoryDetail.getProduct().getNameProduct())
+                    .description(productCategoryDetail.getProduct().getDescription())
+                    .price(productCategoryDetail.getProduct().getPrice())
+                    .stock(productCategoryDetail.getProduct().getStock())
+                    .responses(productDetails)
+                    .build();
 
-            if (Objects.nonNull(request.getMaxPrice())) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("price"), request.getMaxPrice()));
-            }
+            responses.add(response);
+        }
 
-            return query.where(predicates.toArray(new Predicate[]{})).getRestriction();
-        });
-    }
-
-
-    private ProductResponse toProductResponse(Product product){
-        return ProductResponse.builder()
-                .id(product.getId())
-                .productName(product.getNameProduct())
-                .description(product.getDescription())
-                .price(product.getPrice())
-                .stock(product.getStock())
-                .build();
+        return responses;
     }
 }

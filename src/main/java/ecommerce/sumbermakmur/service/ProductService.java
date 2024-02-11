@@ -3,7 +3,8 @@ package ecommerce.sumbermakmur.service;
 import ecommerce.sumbermakmur.dto.ProductRequest;
 import ecommerce.sumbermakmur.dto.SearchProductRequest;
 import ecommerce.sumbermakmur.dto.response.ProductResponse;
-import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 public interface ProductService {
 
@@ -15,5 +16,5 @@ public interface ProductService {
 
     void delete(String id);
 
-    Page<ProductResponse> search(SearchProductRequest request);
+    List<ProductResponse> search(SearchProductRequest request);
 }
