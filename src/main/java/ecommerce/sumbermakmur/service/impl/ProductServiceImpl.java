@@ -214,4 +214,11 @@ public class ProductServiceImpl implements ProductService {
 
         return responses;
     }
+
+    @Override
+    public Product getById(String id) {
+        return repository.findById(id).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "NOT FOUND")
+        );
+    }
 }

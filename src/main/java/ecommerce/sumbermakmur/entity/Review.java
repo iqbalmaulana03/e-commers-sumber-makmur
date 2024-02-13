@@ -1,10 +1,7 @@
 package ecommerce.sumbermakmur.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Date;
 
@@ -14,6 +11,7 @@ import java.util.Date;
 @NoArgsConstructor
 @Entity
 @Table(name = "t_review")
+@Builder
 public class Review extends DateTime {
 
     @Id
