@@ -7,6 +7,7 @@ import ecommerce.sumbermakmur.entity.Customer;
 import ecommerce.sumbermakmur.entity.User;
 import ecommerce.sumbermakmur.repository.CustomerRepository;
 import ecommerce.sumbermakmur.service.CustomerService;
+import ecommerce.sumbermakmur.service.UserService;
 import ecommerce.sumbermakmur.utils.ValidationUtils;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,8 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository repository;
 
+    private final UserService userService;
+
     private final ValidationUtils utils;
 
     private static final String ROLE = "ROLE_ADMIN";
@@ -47,10 +50,11 @@ public class CustomerServiceImpl implements CustomerService {
 
     private static final String NOT_FOUND = "NOT_FOUND";
 
-    public CustomerServiceImpl(CustomerRepository repository, ValidationUtils utils, @Value("${app.sumbermakmur.directory-image-path}") String directoryPath) {
+    public CustomerServiceImpl(CustomerRepository repository, ValidationUtils utils, @Value("${app.sumbermakmur.directory-image-path}") String directoryPath, UserService userService) {
         this.repository = repository;
         this.utils = utils;
         this.directoryPath = Paths.get(directoryPath);
+        this.userService = userService;
     }
 
     @Override
@@ -96,6 +100,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CustomerResponse get(String id) {
 
         Customer customer = repository.findById(id).orElseThrow(
@@ -114,15 +119,26 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void delete(String id) {
         Customer customer = repository.findById(id).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, NOT_FOUND)
         );
 
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = customer.getUser();
+
+        if (!currentUser.getId().equals(user.getId()) &&
+                currentUser.getAuthorities().stream().noneMatch(part -> part.getAuthority().equals(ROLE))){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, FORBIDDEN);
+        }
+
+        userService.delete(customer.getUser().getId());
         repository.delete(customer);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<CustomerResponse> search(SearchCustomerRequest request) {
         Specification<Customer> specification = getCustomerSpecification(request);
 

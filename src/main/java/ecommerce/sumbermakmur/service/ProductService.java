@@ -20,4 +20,6 @@ public interface ProductService {
     List<ProductResponse> search(SearchProductRequest request);
 
     Product getById(String id);
+
+    Product updateProduct(Product product);
 }
