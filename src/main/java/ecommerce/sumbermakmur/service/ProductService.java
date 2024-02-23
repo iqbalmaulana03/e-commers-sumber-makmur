@@ -21,5 +21,5 @@ public interface ProductService {
 
     Product getById(String id);
 
-    Product updateProduct(Product product);
+    void updateProduct(Product product);
 }

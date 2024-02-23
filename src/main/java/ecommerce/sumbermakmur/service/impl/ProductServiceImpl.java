@@ -219,17 +219,17 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(rollbackFor = Exception.class, readOnly = true)
     public Product getById(String id) {
         return repository.findById(id).orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "NOT FOUND")
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "PRODUCT NOT FOUND")
         );
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Product updateProduct(Product product) {
+    public void updateProduct(Product product) {
         Optional<Product> byId = repository.findById(product.getId());
 
         if (byId.isEmpty()) throw  new ResponseStatusException(HttpStatus.NOT_FOUND, "Product Not Found");
 
-        return repository.save(product);
+        repository.save(product);
     }
 }

@@ -184,6 +184,23 @@ public class CustomerServiceImpl implements CustomerService {
         return toCustomerResponse(customer);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Customer getById(String id) {
+        Customer customer = repository.findById(id).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, NOT_FOUND)
+        );
+
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = customer.getUser();
+
+        if (!currentUser.getId().equals(user.getId()) &&
+                currentUser.getAuthorities().stream().noneMatch(part -> part.getAuthority().equals(ROLE))){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, FORBIDDEN);
+        }
+        return customer;
+    }
+
     private static Specification<Customer> getCustomerSpecification(SearchCustomerRequest request) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();

@@ -20,6 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
@@ -59,6 +62,10 @@ public class CartServiceImpl implements CartService {
             throw  new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity exceeds Stock");
         }
 
+        if (request.getQuantity() <= 0){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity min 1");
+        }
+
         Cart cart = Cart.builder()
                 .customer(customer)
                 .product(product)
@@ -68,29 +75,42 @@ public class CartServiceImpl implements CartService {
 
         repository.save(cart);
 
-        product.setStock(product.getStock() - request.getQuantity());
-        productService.updateProduct(product);
-
         return toCartResponse(cart);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public CartResponse getByCustomer(String customerId) {
+    public List<CartResponse> getByCustomer(String customerId) {
 
-        Cart cart = repository.findByCustomerId(customerId).orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, NOT_FOUND)
-        );
+        List<Cart> byCustomerId = repository.findByCustomerId(customerId);
 
-        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = cart.getCustomer().getUser();
+        List<CartResponse> responses = new ArrayList<>();
 
-        if (!currentUser.getId().equals(user.getId()) &&
-                currentUser.getAuthorities().stream().noneMatch(part -> part.getAuthority().equals(ROLE))){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, FORBIDDEN);
+        for (Cart cart : byCustomerId){
+            User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            User user = cart.getCustomer().getUser();
+
+            if (!currentUser.getId().equals(user.getId()) &&
+                    currentUser.getAuthorities().stream().noneMatch(part -> part.getAuthority().equals(ROLE))){
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, FORBIDDEN);
+            }
+
+            CartResponse response = CartResponse.builder()
+                    .id(cart.getId())
+                    .customerId(cart.getCustomer().getId())
+                    .customerName(cart.getCustomer().getLastName())
+                    .productId(cart.getProduct().getId())
+                    .productName(cart.getProduct().getNameProduct())
+                    .price(cart.getPrice())
+                    .quantity(cart.getQuantity())
+                    .build();
+
+            responses.add(response);
         }
 
-        return toCartResponse(cart);
+
+
+        return responses;
     }
 
     @Override
@@ -136,6 +156,14 @@ public class CartServiceImpl implements CartService {
         }
 
         repository.delete(cart);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Cart get(String id) {
+        return repository.findById(id).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CART NOT FOUND")
+        );
     }
 
     private CartResponse toCartResponse(Cart cart){

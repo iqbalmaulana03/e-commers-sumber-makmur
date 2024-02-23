@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("api/carts")
 @RequiredArgsConstructor
@@ -31,10 +33,10 @@ public class CartController {
     }
 
     @GetMapping("/{customerId}")
-    public ResponseEntity<WebResponse<CartResponse>> get(@PathVariable("customerId") String id){
-        CartResponse byCustomer = service.getByCustomer(id);
+    public ResponseEntity<WebResponse<List<CartResponse>>> get(@PathVariable("customerId") String id){
+        List<CartResponse>  byCustomer = service.getByCustomer(id);
 
-        WebResponse<CartResponse> response = WebResponse.<CartResponse>builder()
+        WebResponse<List<CartResponse> > response = WebResponse.<List<CartResponse> >builder()
                 .status(HttpStatus.OK.getReasonPhrase())
                 .message("successfully get cart by customer id")
                 .data(byCustomer)

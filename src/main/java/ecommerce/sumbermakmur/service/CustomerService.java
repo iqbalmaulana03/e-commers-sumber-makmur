@@ -24,4 +24,6 @@ public interface CustomerService {
     Page<CustomerResponse> search(SearchCustomerRequest request);
 
     CustomerResponse uploadAvatar(MultipartFile avatarFileName, String id) throws IOException;
+
+    Customer getById(String id);
 }
