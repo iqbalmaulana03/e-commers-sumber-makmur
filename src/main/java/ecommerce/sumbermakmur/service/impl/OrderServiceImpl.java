@@ -152,10 +152,13 @@ public class OrderServiceImpl implements OrderService {
 
     private String getPayment(OrderDetail order) throws MidtransError {
 
-        MidtransSnapApi snapApi = new ConfigFactory(new Config("SECRET-KEY",
-                "CLIENT-KEY",
-                false))
-                .getSnapApi();
+        Config snapConfigOptions = Config.builder()
+                .setServerKey("YOUR_SERVER_KEY")
+                .setClientKey("YOUR_CLIENT_KEY")
+                .setIsProduction(false)
+                .build();
+
+        MidtransSnapApi snapApi = new ConfigFactory(snapConfigOptions).getSnapApi();
 
         Map<String, Object> params = new HashMap<>();
 
