@@ -22,4 +22,6 @@ public class OrderDetailResponse {
     private String productId;
 
     private String productName;
+
+    private Long countPrice;
 }
