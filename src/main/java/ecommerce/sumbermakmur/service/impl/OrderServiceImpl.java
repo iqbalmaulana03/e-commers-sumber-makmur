@@ -14,6 +14,7 @@ import ecommerce.sumbermakmur.repository.OrderRepository;
 import ecommerce.sumbermakmur.service.*;
 import ecommerce.sumbermakmur.utils.ValidationUtils;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -85,6 +86,8 @@ public class OrderServiceImpl implements OrderService {
 
             paymentService.create(payment);
 
+            cartService.delete(cart.getId());
+
             OrderDetailResponse response = OrderDetailResponse.builder()
                     .orderDetailId(orderDetail.getId())
                     .cartId(cart.getId())
@@ -109,6 +112,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OrderResponse get(String id) {
 
         Order order = repository.findByCustomerId(id).orElseThrow(
@@ -153,18 +157,25 @@ public class OrderServiceImpl implements OrderService {
     private String getPayment(OrderDetail order) throws MidtransError {
 
         Config snapConfigOptions = Config.builder()
-                .setServerKey("YOUR_SERVER_KEY")
-                .setClientKey("YOUR_CLIENT_KEY")
+                .setServerKey("")
+                .setClientKey("")
                 .setIsProduction(false)
                 .build();
 
         MidtransSnapApi snapApi = new ConfigFactory(snapConfigOptions).getSnapApi();
 
+        Map<String, Object> params = getStringObjectMap(order);
+
+        return snapApi.createTransactionRedirectUrl(params);
+    }
+
+    @NotNull
+    private static Map<String, Object> getStringObjectMap(OrderDetail order) {
         Map<String, Object> params = new HashMap<>();
 
         Map<String, Object> transactionDetails = new HashMap<>();
         transactionDetails.put("order_id", order.getOrder().getId());
-        transactionDetails.put("price", order.getCountPrice());
+        transactionDetails.put("gross_amount", order.getCountPrice());
 
         Map<String, Object> customerDetails = new HashMap<>();
         customerDetails.put("first_name", order.getOrder().getCustomer().getFirstName());
@@ -172,7 +183,6 @@ public class OrderServiceImpl implements OrderService {
 
         params.put("transaction_details", transactionDetails);
         params.put("customer_details", customerDetails);
-
-        return snapApi.createTransactionRedirectUrl(params);
+        return params;
     }
 }

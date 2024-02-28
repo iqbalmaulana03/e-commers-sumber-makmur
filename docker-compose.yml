@@ -1,0 +1,41 @@
+version: "3.8"
+volumes:
+  sumbermakmur-volume:
+networks:
+  sumbermakmur-network:
+
+services:
+  db:
+    container_name: sumbermakmur-db
+    image: "postgres:latest"
+    environment:
+      - POSTGRES_USERNAME=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=sumbermakmur_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - sumbermakmur-volume:/var/lib/postgresql/data
+    networks:
+      - sumbermakmur-network
+
+  backend:
+    container_name: sumbermakmur-api
+    # Diambil dari Dockerfile
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+    environment:
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_IN_SECOND=${JWT_EXPIRATION_IN_SECOND}
+      - DIRECTORY_PATH=${DIRECTORY_PATH}
+    networks:
+      - sumbermakmur-network
